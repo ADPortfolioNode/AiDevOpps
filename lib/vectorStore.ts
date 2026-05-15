@@ -13,16 +13,7 @@ let vectorStore: { addDocuments: (docs: VectorDocument[]) => Promise<void>, simi
 
 async function createVectorStore() {
   try {
-    const module = await import('@lancedb/lancedb');
-    const LanceDBCtor = (module as any).default ?? (module as any).LanceDB ?? (module as any).Lance;
-
-    if (typeof LanceDBCtor === 'function') {
-      vectorStore = new LanceDBCtor({
-        collectionName: 'aidevopps',
-        path: './.aidevopps_lancedb'
-      });
-      return vectorStore;
-    }
+    // LanceDB is temporarily disabled to resolve binary issues and simplify the build.
   } catch (error) {
     console.warn('LanceDB vector store unavailable; using fallback in-memory store.', error);
   }

@@ -3,7 +3,7 @@ import { GeistSans } from 'geist/font';
 import { TopNav } from '../components/TopNav'; // Import the new TopNav Client Component
 import { ChatPanel } from '../components/ChatPanel'; // Import the new ChatPanel Client Component
 import type { Metadata } from 'next';
-
+ erro
 export default function RootLayout({
   children,
 }: Readonly<{

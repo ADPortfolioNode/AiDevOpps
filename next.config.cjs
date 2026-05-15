@@ -7,8 +7,7 @@ const nextConfig = {
   // Instead, it will be treated as an external dependency that Node.js will
   // require at runtime. This is the correct way to handle packages with
   // native Node.js addons (.node files).
-  // Commented out as we are removing LanceDB dependencies for a minimal build.
-  // serverExternalPackages: ['@lancedb/lancedb'],
+  serverExternalPackages: ['@lancedb/lancedb'],
 
   webpack: (config) => {
     // This is the best-practice way to inform Webpack of your path aliases.
