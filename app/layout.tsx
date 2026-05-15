@@ -3,7 +3,7 @@ import { GeistSans } from 'geist/font';
 import { TopNav } from '../components/TopNav'; // Import the new TopNav Client Component
 import { ChatPanel } from '../components/ChatPanel'; // Import the new ChatPanel Client Component
 import type { Metadata } from 'next';
- erro
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -11,7 +11,7 @@ export default function RootLayout({
 }>) {
   // Metadata can be defined directly in a Server Component
   const metadata: Metadata = {
-    title: 'AiDevOpps Concierge',
+    title: 'AiDevOpps',
     description: 'Vercel-only Node.js version of Concierge.',
   };
 
