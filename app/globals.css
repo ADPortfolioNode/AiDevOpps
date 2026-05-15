@@ -33,7 +33,7 @@ body {
 }
 
 .prompt-chip {
-  @apply cursor-pointer rounded-2xl border border-slate-700/80 bg-slate-900/80 px-4 py-2 text-sm text-slate-100 transition hover:border-slate-500/90 hover:bg-slate-800/95;
+  @apply cursor-pointer rounded-2xl border border-slate-700/80 bg-slate-900/80 px-4 py-2 text-sm text-slate-100 transition-all duration-200 hover:border-slate-500/90 hover:bg-slate-800/95 hover:scale-105;
 }
 
 .prompt-chip.active {

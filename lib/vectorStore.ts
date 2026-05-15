@@ -1,7 +1,15 @@
-import type { Message } from './serverCache';
+import 'server-only';
+
+import { type Message } from './types'; // Corrected import path
+
+interface VectorDocument {
+  id: string;
+  text: string;
+  metadata: { role: 'user' | 'assistant' | 'system' };
+}
 
 const fallbackMessages: Message[] = [];
-let vectorStore: any = null;
+let vectorStore: { addDocuments: (docs: VectorDocument[]) => Promise<void>, similaritySearch: (query: string, count: number) => Promise<any[]> } | null = null;
 
 async function createVectorStore() {
   try {

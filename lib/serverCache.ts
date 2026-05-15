@@ -1,20 +1,13 @@
-export type Role = 'user' | 'assistant' | 'system';
+import { type Message, type TimelineEvent } from './types'; // Corrected import path
 
-export type Message = {
-  id: string;
-  role: Role;
-  text: string;
-  createdAt: string;
-};
-
-export type TimelineEvent = {
-  id: string;
-  title: string;
-  details: string;
-  createdAt: string;
-};
-
-const conversationHistory: Message[] = [];
+const conversationHistory: Message[] = [
+  {
+    id: 'init-chat',
+    role: 'assistant',
+    text: 'Welcome to AiDevOpps. I am your personal concierge, ready to help you plan, automate, and manage your work. What can I do for you today?',
+    createdAt: new Date().toISOString(),
+  },
+];
 const timelineHistory: TimelineEvent[] = [
   {
     id: 'init',

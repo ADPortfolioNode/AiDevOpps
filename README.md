@@ -6,11 +6,16 @@ This project is a fresh Next.js 15 App Router rewrite of the Concierge dashboard
 
 ## Features
 
-- Clean dashboard with a `Welcome back` hero section
+- Clean dashboard with a `Welcome back` hero section and a left-side AI chat panel
 - Four quick-action cards: Achieve Your Goals, Automate Your Work, Plan Your Strategy, Manage Your Workspace
-- Right-side AI chat panel that opens when a prompt is clicked
+- Left-side AI chat panel that is always visible
 - Simple server-side API routes in Next.js under `/api/concierge/*`
 - IndexedDB conversation history on the frontend + lightweight server cache
+- **Cloud-Native AI Agents:** Multi-provider abstraction layer (OpenAI, Anthropic, Local)
+- **Policy-Based Routing:** Optimizes model usage for cost, performance, and privacy
+- **Tool Invocation:** Extensible tool registry for dynamic function execution
+- **Agent Observability:** Integrated logging and tracing for the agent lifecycle
+- **Evaluation Framework:** Built-in accuracy, latency, and reliability testing
 - Prepared for deployment on Vercel
 
 ## Run locally
