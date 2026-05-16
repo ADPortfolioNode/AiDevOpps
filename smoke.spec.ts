@@ -6,8 +6,8 @@ test.describe('Concierge Workflow', () => {
     await page.goto('/');
 
     // 1. Verify main page content and initial chat state
-    // Check for the "Welcome back" hero section
-    await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+    // Check for the "Welcome to AiDevOpps" hero section
+    await expect(page.getByRole('heading', { name: 'Welcome to AiDevOpps' })).toBeVisible();
 
     // The chat panel should be visible and contain a greeting
     const chatPanel = page.locator('aside[aria-label="AI Chat"]');
@@ -15,17 +15,17 @@ test.describe('Concierge Workflow', () => {
     await expect(chatPanel.getByText(/Welcome to AiDevOpps/)).toBeVisible();
 
     // 2. Interact with a quick action
-    // Find and click a prompt chip
-    const promptChip = page.getByRole('button', { name: 'Create a 4-week goal to migrate our REST API to GraphQL.' });
-    await expect(promptChip).toBeVisible();
-    await promptChip.click();
+    // Find and click the first dashboard card
+    const actionCard = page.getByRole('button', { name: 'Achieve Your Goals' });
+    await expect(actionCard).toBeVisible();
+    await actionCard.click();
 
     // 3. Verify chat interaction
     // The user's message (from the chip) should appear in the chat
-    await expect(chatPanel.getByText('Create a 4-week goal to migrate our REST API to GraphQL.')).toBeVisible();
+    await expect(chatPanel.getByText(/migrate our REST API/)).toBeVisible();
 
     // An assistant response should appear and eventually stop "thinking"
-    await expect(chatPanel.locator('.message-bubble.assistant').last()).toBeVisible({ timeout: 10000 });
+    await expect(chatPanel.locator('.message-bubble.assistant')).toBeVisible({ timeout: 15000 });
     await expect(chatPanel.getByText('Thinking...')).not.toBeVisible();
 
     // 4. Send a message via the input

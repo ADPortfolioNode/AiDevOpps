@@ -4,6 +4,10 @@ import React, { createContext, useContext } from 'react';
 import { type Message as AIMessage } from 'ai/react';
 
 interface ChatContextType {
+  messages: AIMessage[];
+  input: string;
+  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement> | React.ChangeEvent<HTMLInputElement>) => void;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   append: (message: AIMessage) => void;
   isLoading: boolean;
 }

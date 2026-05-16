@@ -1,24 +1,24 @@
-import { type Message, type TimelineEvent } from './types'; // Corrected import path
+import { Message, TimelineEvent } from './types';
 
 const conversationHistory: Message[] = [
   {
-    id: 'init-chat',
+    id: 'welcome-message',
     role: 'assistant',
-    text: 'Welcome to AiDevOpps. I am your personal concierge, ready to help you plan, automate, and manage your work. What can I do for you today?',
-    createdAt: new Date().toISOString(),
-  },
-];
-const timelineHistory: TimelineEvent[] = [
-  {
-    id: 'init',
-    title: 'AiDevOpps ready',
-    details: 'The local server cache is initialized and awaiting prompts.',
+    text: 'Welcome to AiDevOpps. How can I help you today?',
     createdAt: new Date().toISOString()
+  }
+];
+const timelineEvents: TimelineEvent[] = [
+  {
+    id: 'init-1',
+    title: 'System Initialized',
+    details: 'AiDevOpps core kernel is active and listening.',
+    timestamp: new Date().toISOString()
   }
 ];
 
 export function getConversationHistory() {
-  return [...conversationHistory];
+  return conversationHistory;
 }
 
 export function addConversationMessage(message: Message) {
@@ -26,14 +26,14 @@ export function addConversationMessage(message: Message) {
 }
 
 export function getTimelineEvents() {
-  return [...timelineHistory].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return timelineEvents;
 }
 
 export function addTimelineEvent(title: string, details: string) {
-  timelineHistory.push({
-    id: `${Date.now()}-${title.replace(/\s+/g, '-').toLowerCase()}`,
+  timelineEvents.unshift({
+    id: Math.random().toString(36).substring(7),
     title,
     details,
-    createdAt: new Date().toISOString()
+    timestamp: new Date().toISOString()
   });
 }

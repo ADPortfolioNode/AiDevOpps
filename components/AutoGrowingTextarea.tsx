@@ -1,42 +1,14 @@
 'use client';
+import * as React from 'react';
+import TextareaAutosize from 'react-textarea-autosize';
+import { cn } from '@/lib/utils';
 
-import React, { forwardRef, useEffect, useRef, TextareaHTMLAttributes } from 'react';
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
-interface AutoGrowingTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  maxHeight?: number;
-}
-
-export const AutoGrowingTextarea = forwardRef<HTMLTextAreaElement, AutoGrowingTextareaProps>(
-  ({ maxHeight = 220, className = '', ...props }, ref) => {
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    const adjustHeight = () => {
-      const ta = textareaRef.current;
-      if (!ta) return;
-
-      ta.style.height = 'auto';
-      const newHeight = Math.min(ta.scrollHeight, maxHeight);
-      ta.style.height = `${newHeight}px`;
-    };
-
-    useEffect(() => {
-      adjustHeight();
-    }, [props.value]);
-
+export const AutoGrowingTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => {
     return (
-      <textarea
-        ref={(el) => {
-          textareaRef.current = el;
-          if (typeof ref === 'function') ref(el);
-          else if (ref) ref.current = el;
-        }}
-        className={`w-full resize-none overflow-y-auto bg-transparent focus:outline-none ${className}`}
-        style={{ maxHeight: `${maxHeight}px` }}
-        onInput={adjustHeight}
-        {...props}
-      />
+      <TextareaAutosize className={cn("flex min-h-[80px] w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50", className)} ref={ref as any} {...props as any} />
     );
   }
 );
-
-AutoGrowingTextarea.displayName = 'AutoGrowingTextarea';
