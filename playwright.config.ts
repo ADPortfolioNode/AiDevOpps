@@ -14,8 +14,6 @@ export default defineConfig({
     url: baseURL,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
-    // Wait for the server to return a 2xx status code
-    action: 'accept',
     // Log server output to the console for debugging
     stdout: 'pipe',
   },

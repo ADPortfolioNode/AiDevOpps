@@ -1,7 +1,7 @@
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
-  text: string;
+  content: string;
   createdAt: string;
 }
 

@@ -1,20 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { addConversationMessage, addTimelineEvent, getConversationHistory } from '@/lib/serverCache';
 import { addToVectorStore, semanticSearch } from '@/lib/vectorStore';
-// import { OpenAIStream, StreamingTextResponse } from 'ai'; // Not needed for a placeholder response
-
-// // Temporarily commented out for minimal build to resolve compilation issues
-// // import { ModelRouter } from '@/lib/ai/router';
-// // import { ToolRegistry } from '@/lib/agents/tools';
-// // import { AgentLogger } from '@/lib/observability/logger';
-// // import { OpenAIProvider } from '@/lib/ai/openai-provider';
-// // import { ConciergeAgent } from '@/lib/agents/concierge-agent';
-//
-// // // Import and Register Tools
-// // import { weatherTool } from '@/lib/agents/tools/weather-tool';
-//
-// // // Register tools to make them discoverable by the agent
-// // ToolRegistry.register(weatherTool);
 
 export async function GET() {
   const conversation = getConversationHistory();
@@ -22,14 +8,14 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const { messages } = await request.json();
-  const userMessage = messages[messages.length - 1];
+  const body: any = await request.json();
+  const userMessage = body.messages?.[body.messages.length - 1];
 
   if (userMessage && userMessage.role === 'user') {
-    const newEntry = {
+    const newEntry: any = {
       id: userMessage.id || crypto.randomUUID(),
-      role: 'user' as const,
-      text: userMessage.content,
+      role: 'user',
+      content: userMessage.content,
       createdAt: new Date().toISOString(),
     };
     addConversationMessage(newEntry);
@@ -45,7 +31,7 @@ export async function POST(request: NextRequest) {
     } else {
       const ragResults = await semanticSearch(userMessage.content);
       if (ragResults.length > 0) {
-        responseText = ragResults[0].text;
+        responseText = ragResults[0].content;
       }
     }
 

@@ -3,7 +3,6 @@
 import { useChatContext } from '@/lib/chatContext';
 import { AutoGrowingTextarea } from '@/components/AutoGrowingTextarea';
 import { Button } from '@/components/button';
-import { ScrollArea } from '@/components/scroll-area';
 import React from 'react';
 
 export function Chat() {
@@ -11,9 +10,9 @@ export function Chat() {
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChatContext();
 
   return (
-    <div className="flex flex-col h-full bg-panel">
-      {/* Messages Area - Fills space and scrolls */}
-      <ScrollArea className="flex-1 p-4">
+    <div className="flex flex-col h-auto bg-panel transition-all duration-300">
+      {/* Messages Area - Fills space */}
+      <div className="p-4">
         <div className="space-y-4 max-w-full">
           {messages.map(m => (
             <div 
@@ -44,7 +43,7 @@ export function Chat() {
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Input Area - Fixed at bottom */}
       <div className="p-4 border-t border-white/10 bg-panel/50 backdrop-blur-sm">

@@ -14,12 +14,35 @@
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    @apply border-[#1e293b]; /* Standard slate-800 for consistent borders */
   }
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    @apply bg-[#020617] text-slate-100 antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* Responsive Transitions for World Class UX */
+.panel-transition {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Mobile-first scrollbar hiding but keeping functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes slide-in {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.4s ease-out forwards;
 }
 
 /* custom utility classes for the dashboard panels */
@@ -31,6 +54,9 @@
     @apply bg-[#0f172a];
   }
   .text-accent {
-    @apply text-[#3b82f6];
+    @apply text-blue-500;
+  }
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
   }
 }

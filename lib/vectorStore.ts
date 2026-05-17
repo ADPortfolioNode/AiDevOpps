@@ -4,7 +4,7 @@ import { type Message } from './types'; // Corrected import path
 
 interface VectorDocument {
   id: string;
-  text: string;
+  content: string;
   metadata: { role: 'user' | 'assistant' | 'system' };
 }
 
@@ -32,7 +32,7 @@ export async function addToVectorStore(message: Message) {
       await vectorStore.addDocuments([
         {
           id: message.id,
-          text: message.text,
+          content: message.content,
           metadata: { role: message.role }
         }
       ]);
@@ -47,9 +47,9 @@ export async function semanticSearch(query: string) {
     try {
       return await vectorStore.similaritySearch(query, 3);
     } catch {
-      return fallbackMessages.filter((message) => message.text.toLowerCase().includes(query.toLowerCase())).slice(0, 3);
+      return fallbackMessages.filter((message) => message.content.toLowerCase().includes(query.toLowerCase())).slice(0, 3);
     }
   }
 
-  return fallbackMessages.filter((message) => message.text.toLowerCase().includes(query.toLowerCase())).slice(0, 3);
+  return fallbackMessages.filter((message) => message.content.toLowerCase().includes(query.toLowerCase())).slice(0, 3);
 }

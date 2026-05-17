@@ -1,7 +1,8 @@
 import './globals.css';
 import { GeistSans } from 'geist/font';
-import { TopNav } from '../components/TopNav'; // Import the new TopNav Client Component
-import { ChatPanel } from '../components/ChatPanel'; // Import the new ChatPanel Client Component
+import { TopNav } from '@/components/TopNav';
+import { ChatPanel } from '@/components/ChatPanel';
+import { ModelProvider } from '@/lib/modelContext';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -17,14 +18,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={GeistSans.className}>
       <body
-        className="flex h-screen flex-col bg-surface overflow-hidden"
+        className="flex min-h-screen flex-col bg-surface"
         // This is to prevent a hydration warning caused by browser extensions
         // like Grammarly injecting attributes into the body tag.
         // See: https://react.dev/reference/react-dom/client/hydrateRoot#suppressing-hydration-warnings
         suppressHydrationWarning={true}
       >
-        <TopNav />
-        <ChatPanel className="flex-1">{children}</ChatPanel>
+        <ModelProvider>
+          <TopNav />
+          <ChatPanel className="flex-1">{children}</ChatPanel>
+        </ModelProvider>
       </body>
     </html>
   );

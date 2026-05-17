@@ -26,7 +26,6 @@ test.describe('Production API Workflows', () => {
   });
 
   test('should get a successful response from the health API', async ({ request }) => {
-    test.fixme('Health API not yet implemented in minimal build');
     const response = await request.get('/api/concierge/health');
 
     // Check if the response is successful
@@ -38,7 +37,6 @@ test.describe('Production API Workflows', () => {
   });
 
   test('should get a list of integrations', async ({ request }) => {
-    test.fixme('Integrations API not yet implemented in minimal build');
     const response = await request.get('/api/integrations');
     expect(response.ok()).toBe(true);
     const responseBody = await response.json();
@@ -50,7 +48,6 @@ test.describe('Production API Workflows', () => {
   });
 
   test('should get and post to the threads API', async ({ request }) => { 
-    test.fixme('Threads API not yet implemented in minimal build');
     const testThreadId = `test-thread-${Date.now()}`;
     const initialMessage = 'Hello from thread test!';
 
