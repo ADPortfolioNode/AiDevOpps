@@ -6,13 +6,13 @@ test.describe('Concierge Workflow', () => {
     await page.goto('/');
 
     // 1. Verify main page content and initial chat state
-    // Check for the "Welcome to AiDevOpps" hero section
-    await expect(page.getByRole('heading', { name: 'Welcome to AiDevOpps' })).toBeVisible();
+    // Check for the "Welcome to AiDevOps" hero section
+    await expect(page.getByRole('heading', { name: 'Welcome to AiDevOps' })).toBeVisible();
 
     // The chat panel should be visible and contain a greeting
     const chatPanel = page.locator('aside[aria-label="AI Chat"]');
     await expect(chatPanel).toBeVisible();
-    await expect(chatPanel.getByText(/Welcome to AiDevOpps/)).toBeVisible();
+    await expect(chatPanel.getByText(/Welcome to AiDevOps/)).toBeVisible();
 
     // 2. Interact with a quick action
     // Find and click the first dashboard card

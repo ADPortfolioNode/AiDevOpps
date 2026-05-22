@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type AIModel = 'gpt-4o-mini' | 'llama-local';
+export type AIModel = 'gpt-4o-mini' | 'gemini-1.5-flash' | 'llama-local';
 
 interface ModelContextType {
   selectedModel: AIModel;
@@ -17,7 +17,7 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
   // Load initial value from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('aidevopps-model') as AIModel;
-    if (saved && (saved === 'gpt-4o-mini' || saved === 'llama-local')) {
+    if (saved && ['gpt-4o-mini', 'gemini-1.5-flash', 'llama-local'].includes(saved)) {
       setSelectedModel(saved);
     }
   }, []);

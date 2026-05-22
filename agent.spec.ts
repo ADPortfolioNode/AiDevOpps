@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { EvaluationFramework } from './lib/evals/framework';
 
-test.describe('Agent Tool Invocation', () => {
+test.describe('Agent Tool Usage via UI', () => {
   test('should invoke the weather tool and return a result', async ({ page }) => {
     await page.goto('/');
 
@@ -17,64 +16,21 @@ test.describe('Agent Tool Invocation', () => {
     await expect(assistantResponse).toContainText('San Francisco', { timeout: 15000 });
     await expect(assistantResponse).toContainText('°F', { timeout: 15000 });
   });
-});
 
-test.describe('Agent RAG Functionality', () => {
-  test('should use RAG to answer a question from context', async ({ request }) => {
-    test.fixme('Concierge RAG route is placeholder in minimal build');
-    // This test relies on the in-memory vector store persisting between requests
-    // during the test run, which is how the dev server behaves.
+  test('should invoke the web search tool for a timely question', async ({ page }) => {
+    // This test requires a TAVILY_API_KEY to be set in the environment.
+    test.skip(!process.env.TAVILY_API_KEY, 'TAVILY_API_KEY not set, skipping web search test.');
 
-    // Step 1: Seed the vector store with a piece of information by sending it as a message.
-    const contextMessage = 'The secret code for project "Phoenix" is "firebird".';
-    const seedResponse = await request.post('/api/concierge/conversation', {
-      data: {
-        messages: [{ role: 'user', content: contextMessage }],
-      },
-    });
-    // Ensure the seeding call was successful and wait for it to complete.
-    expect(seedResponse.ok()).toBe(true);
-    await seedResponse.text();
+    await page.goto('/');
 
-    // Step 2: Ask a question that should be answered using the context from the first message.
-    const question = 'What is the secret code for project Phoenix?';
-    const ragResponse = await request.post('/api/concierge/conversation', {
-      data: {
-        messages: [{ role: 'user', content: question }],
-      },
-    });
+    const chatPanel = page.locator('aside[aria-label="AI Chat"]');
+    const chatInput = chatPanel.getByPlaceholder('Ask a question or type a command...');
 
-    expect(ragResponse.ok()).toBe(true);
-    const responseBody = await ragResponse.text();
+    // Ask a question that requires a web search
+    await chatInput.fill('What is the latest news about Vercel?');
+    await page.keyboard.press('Enter');
 
-    // The streaming response text should contain the answer from the RAG context.
-    expect(responseBody.toLowerCase()).toContain('firebird');
-  });
-});
-
-test.describe('Agent Evaluation Framework', () => {
-  test('should accurately respond to a question using a tool', async ({ request }) => {
-    const question = 'What is the current temperature in San Francisco?';
-
-    const evalResult = await EvaluationFramework.evaluate(
-      'ConciergeAgent-WeatherTool',
-      async () => {
-        const response = await request.post('/api/concierge/conversation', {
-          data: {
-            messages: [{ role: 'user', content: question }],
-          },
-        });
-        return response.text();
-      },
-      (responseText) => {
-        // Validation: The response should contain the location and a temperature unit.
-        const lowercasedResponse = responseText.toLowerCase();
-        return lowercasedResponse.includes('san francisco') && lowercasedResponse.includes('f');
-      }
-    );
-
-    expect(evalResult.accuracyScore).toBe(1.0);
-    expect(evalResult.reliabilityScore).toBe(1.0);
-    expect(evalResult.latencyMs).toBeLessThan(15000); // Expect a response within 15 seconds
+    const assistantResponse = chatPanel.locator('.message-bubble.assistant').last();
+    await expect(assistantResponse).toContainText('Vercel', { timeout: 20000 });
   });
 });

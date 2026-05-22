@@ -8,7 +8,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        surface: '#0f172a',
+        surface: '#050505',
         panel: '#111827',
         accent: '#7c6af7'
       },
@@ -28,7 +28,7 @@ const config: Config = {
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
-        'background-shine': 'backgroundShine 15s ease-infinite',
+        'background-shine': 'backgroundShine 15s ease infinite',
       },
     }
   },

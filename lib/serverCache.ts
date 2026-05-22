@@ -2,17 +2,17 @@ import { Message, TimelineEvent } from './types';
 
 const conversationHistory: Message[] = [
   {
-    id: 'welcome-message',
+    id: 'welcome-message', 
     role: 'assistant',
-    content: 'AiDevOpps System Status: ONLINE. All services operational. Welcome! How can I help you today?',
+    content: 'AiDevOps System Status: ONLINE. All services operational. Welcome! How can I help you today?',
     createdAt: new Date().toISOString()
   }
 ];
 const timelineEvents: TimelineEvent[] = [
   {
     id: 'init-1',
-    title: 'System Initialized',
-    details: 'AiDevOpps core kernel is active and listening.',
+    title: 'System Initialized', 
+    details: 'AiDevOps core kernel is active and listening.',
     timestamp: new Date().toISOString()
   }
 ];
