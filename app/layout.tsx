@@ -23,11 +23,10 @@ export default function RootLayout({
         <Providers>
             <div className="flex flex-col h-screen text-white">
               <TopNav />
-              <div className="flex flex-1 overflow-hidden">
-                <DocumentUploadModal />
-                <main className="flex-1 overflow-y-auto">{children}</main>
-                <ChatPanel>{null}</ChatPanel>
-              </div>
+              <ChatPanel>
+                {children}
+              </ChatPanel>
+              <DocumentUploadModal />
             </div>
         </Providers>
       </body>

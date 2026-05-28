@@ -1,11 +1,11 @@
-import { Message, TimelineEvent } from './types';
+import { Message, TimelineEvent, Workflow } from './types';
 
 const conversationHistory: Message[] = [
   {
     id: 'welcome-message', 
     role: 'assistant',
     content: 'AiDevOps System Status: ONLINE. All services operational. Welcome! How can I help you today?',
-    createdAt: new Date().toISOString()
+    createdAt: new Date()
   }
 ];
 const timelineEvents: TimelineEvent[] = [
@@ -17,7 +17,7 @@ const timelineEvents: TimelineEvent[] = [
   }
 ];
 
-const workflows = [
+const workflows: Workflow[] = [
   { id: 'wf-1', name: 'Daily Standup Summary', status: 'active', lastRun: new Date().toISOString() },
   { id: 'wf-2', name: 'GitHub Issue Triage', status: 'paused', lastRun: new Date().toISOString() },
 ];

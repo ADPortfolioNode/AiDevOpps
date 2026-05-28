@@ -47,14 +47,15 @@ export async function POST(request: NextRequest) {
     });
 
     const assistantMessage = response.output;
-
+    
     // Store in cache
-    addConversationMessage({
-      id: `msg-${Date.now()}`,
-      role: 'assistant',
+    const assistantMessageRecord = {
+      id: `msg_${Date.now()}`,
+      role: 'assistant' as const,
       content: String(assistantMessage),
-      createdAt: new Date().toISOString(),
-    });
+      createdAt: new Date(),
+    };
+    addConversationMessage(assistantMessageRecord);
 
     addTimelineEvent('Assistant Response', `Assistant replied to user query`);
 
