@@ -1,77 +1,69 @@
 import { test, expect } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
 
-test.describe('Production API Workflows', () => {
-  test('should get a streaming response from the conversation API', async ({ request }) => {
+test.describe('Core API Workflows and URL Accessibility', () => {
+  test('should render the main chat interface at the base URL', async ({ page }) => {
+    // This test verifies that the baseURL is reachable and renders the main UI.
+    // It checks for the presence of the initial assistant message.
+    await page.goto('/');
+    const welcomeMessage = page.locator('text/AiDevOps System Status: ONLINE.');
+    await expect(welcomeMessage).toBeVisible();
+  });
+
+  test('should get a response from the chat API', async ({ request }) => {
     const userMessage = 'Hello, assistant!';
-    const response = await request.post('/api/concierge/conversation', {
+    // This test verifies the primary chat endpoint is responsive.
+    const response = await request.post('/api/chat', {
       data: {
         messages: [{ role: 'user', content: userMessage }],
       },
     });
 
-    // Check if the response is successful
-    expect(response.ok()).toBe(true);
-    // Check that we received the placeholder JSON response
-    expect(response.headers()['content-type']).toContain('application/json');
-  });
-
-  test('should get initial conversation history', async ({ request }) => {
-    const response = await request.get('/api/concierge/conversation');
     expect(response.ok()).toBe(true);
     const responseBody = await response.json();
-    expect(responseBody).toHaveProperty('conversation');
-    expect(Array.isArray(responseBody.conversation)).toBe(true);
-    expect(responseBody.conversation.length).toBeGreaterThan(0);
-    expect(responseBody.conversation[0].role).toBe('assistant');
+    expect(responseBody).toHaveProperty('content');
+    expect(typeof responseBody.content).toBe('string');
   });
 
-  test('should get a successful response from the health API', async ({ request }) => {
-    const response = await request.get('/api/concierge/health');
+  test('should successfully ingest a text file', async ({ request }) => {
+    // Create a dummy file for testing
+    const filePath = path.join(__dirname, 'test-doc.txt');
+    const fileContent = 'This is a test document for ingestion.';
+    fs.writeFileSync(filePath, fileContent);
 
-    // Check if the response is successful
-    expect(response.ok()).toBe(true);
+    const fileBuffer = fs.readFileSync(filePath);
 
-    const responseBody = await response.json();
-    expect(responseBody).toHaveProperty('status', 'ok');
-    expect(responseBody).toHaveProperty('timestamp');
-  });
-
-  test('should get a list of integrations', async ({ request }) => {
-    const response = await request.get('/api/integrations');
-    expect(response.ok()).toBe(true);
-    const responseBody = await response.json();
-    expect(responseBody).toHaveProperty('integrations');
-    expect(Array.isArray(responseBody.integrations)).toBe(true);
-    expect(responseBody.integrations.length).toBeGreaterThan(0);
-    expect(responseBody.integrations[0]).toHaveProperty('id');
-    expect(responseBody.integrations[0]).toHaveProperty('name');
-  });
-
-  test('should get and post to the threads API', async ({ request }) => { 
-    const testThreadId = `test-thread-${Date.now()}`;
-    const initialMessage = 'Hello from thread test!';
-
-    // Test GET (empty initially)
-    const getResponse = await request.get(`/api/threads?threadId=${testThreadId}`);
-    expect(getResponse.ok()).toBe(true);
-    const getBody = await getResponse.json();
-    expect(getBody).toHaveProperty('threadId', testThreadId);
-    expect(getBody).toHaveProperty('history');
-    expect(Array.isArray(getBody.history)).toBe(true);
-    expect(getBody.history).toHaveLength(0);
-
-    // Test POST to add an initial message
-    const postInitialResponse = await request.post('/api/threads', {
-      data: { threadId: testThreadId, message: { role: 'user', text: initialMessage } }, // Corrected data structure
+    const response = await request.post('/api/ingest', {
+      multipart: {
+        document: {
+          name: 'test-doc.txt',
+          mimeType: 'text/plain',
+          buffer: fileBuffer,
+        },
+      },
     });
-    expect(postInitialResponse.ok()).toBe(true);
 
-    // Verify GET after POST
-    const getUpdatedResponse = await request.get(`/api/threads?threadId=${testThreadId}`);
-    expect(getUpdatedResponse.ok()).toBe(true);
-    const getUpdatedBody = await getUpdatedResponse.json(); // Corrected variable name
-    expect(getUpdatedBody.history).toHaveLength(1);
-    expect(getUpdatedBody.history[0].text).toBe(initialMessage);
-    expect(getUpdatedBody.history[0].role).toBe('user');
+    expect(response.ok()).toBe(true);
+    const responseBody = await response.json();
+    expect(responseBody.message).toContain('Successfully ingested');
+
+    // Clean up the dummy file
+    fs.unlinkSync(filePath);
+  });
+
+  test('should successfully ingest a URL', async ({ request }) => {
+    // Using a known, reliable, and simple page for testing.
+    const testUrl = 'https://info.cern.ch/hypertext/WWW/TheProject.html';
+
+    const response = await request.post('/api/ingest', {
+      multipart: {
+        url: testUrl,
+      },
+    });
+
+    expect(response.ok()).toBe(true);
+    const responseBody = await response.json();
+    expect(responseBody.message).toContain('Successfully ingested');
   });
 });

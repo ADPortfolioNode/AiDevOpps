@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Install dependencies based on package-lock.json
 COPY package.json package-lock.json* ./
-RUN rm -f package-lock.json && npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps
 
 # Stage 2: Build the application
 FROM node:20-alpine AS builder

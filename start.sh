@@ -61,8 +61,21 @@ else
 fi
 
 # 3. Delete Conflicting Files
-echo "✓ No conflicting files to delete."
-# Intentionally left blank to prevent accidental deletion of source files.
+echo "🗑️  Cleaning up stale project files for a clean build..."
+rm -f package-lock.json
+echo "✓ Removed potentially stale package-lock.json."
+
+# List of obsolete files to remove to prevent build conflicts
+OBSOLETE_FILES="
+app/api/concierge/conversation/route.ts
+lib/chroma.ts
+"
+for FILE in $OBSOLETE_FILES; do
+  if [ -f "$FILE" ]; then
+    rm -f "$FILE"
+    echo "✓ Removed obsolete file: $FILE"
+  fi
+done
 
 # 4. Docker Cleanup
 echo "🧹 Stopping existing containers and clearing volumes..."

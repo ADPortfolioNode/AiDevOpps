@@ -1,55 +1,53 @@
-import 'server-only';
+// lib/vectorStore.ts
+import { Pinecone } from '@pinecone-database/pinecone';
+import { PineconeStore } from '@langchain/pinecone';
+import { getEmbeddingModel } from './embeddings';
+import { Document } from '@langchain/core/documents';
 
-import { type Message } from './types'; // Corrected import path
+let vectorStore: PineconeStore | null = null;
+const RAG_N_RESULTS = process.env.RAG_N_RESULTS ? parseInt(process.env.RAG_N_RESULTS, 10) : 6;
 
-interface VectorDocument {
-  id: string;
-  content: string;
-  metadata: { role: 'user' | 'assistant' | 'system' };
-}
-
-const fallbackMessages: Message[] = [];
-let vectorStore: { addDocuments: (docs: VectorDocument[]) => Promise<void>, similaritySearch: (query: string, count: number) => Promise<any[]> } | null = null;
-
-async function createVectorStore() {
-  try {
-    // LanceDB is temporarily disabled to resolve binary issues and simplify the build.
-  } catch (error) {
-    console.warn('LanceDB vector store unavailable; using fallback in-memory store.', error);
-  }
-  return null;
-}
-
-export async function addToVectorStore(message: Message) {
-  fallbackMessages.push(message);
-
+async function getVectorStore() {
   if (!vectorStore) {
-    await createVectorStore();
-  }
-
-  if (vectorStore && typeof vectorStore.addDocuments === 'function') {
-    try {
-      await vectorStore.addDocuments([
-        {
-          id: message.id,
-          content: message.content,
-          metadata: { role: message.role }
-        }
-      ]);
-    } catch {
-      // ignore Lancedb failures and continue with fallback storage
+    if (!process.env.PINECONE_API_KEY) {
+      throw new Error('❌ PINECONE_API_KEY is not set in environment variables');
     }
+    if (!process.env.PINECONE_INDEX) {
+      throw new Error('❌ PINECONE_INDEX is not set in environment variables');
+    }
+
+    const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
+
+    const index = pc.Index(process.env.PINECONE_INDEX!);
+
+    const embeddings = getEmbeddingModel();
+
+    vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
+      pineconeIndex: index,
+      namespace: process.env.PINECONE_NAMESPACE || undefined,
+    });
   }
+  return vectorStore;
 }
 
-export async function semanticSearch(query: string) {
-  if (vectorStore && typeof vectorStore.similaritySearch === 'function') {
-    try {
-      return await vectorStore.similaritySearch(query, 3);
-    } catch {
-      return fallbackMessages.filter((message) => message.content.toLowerCase().includes(query.toLowerCase())).slice(0, 3);
-    }
-  }
+export async function addToVectorStore(docs: Document[]) {
+  const store = await getVectorStore();
+  await store.addDocuments(docs);
+  console.log(`✅ Added ${docs.length} documents to Pinecone`);
+  return true;
+}
 
-  return fallbackMessages.filter((message) => message.content.toLowerCase().includes(query.toLowerCase())).slice(0, 3);
+export async function semanticSearch(query: string, userId?: string): Promise<string[]> {
+  try {
+    const store = await getVectorStore();
+    const filter: Record<string, any> | undefined = userId ?
+      { '$or': [{ 'userId': { '$eq': userId } }, { 'userId': { '$exists': false } }] } :
+      undefined;
+
+    const results = await store.similaritySearch(query, RAG_N_RESULTS, filter);
+    return results.map((doc) => doc.pageContent);
+  } catch (error) {
+    console.error('Error performing semantic search in Pinecone:', error);
+    return [];
+  }
 }

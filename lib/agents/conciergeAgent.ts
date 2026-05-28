@@ -1,82 +1,38 @@
-import { AgentExecutor, createReactAgent } from 'langchain/agents';
-import { pull } from 'langchain/hub';
-import type { ChatPromptTemplate } from '@langchain/core/prompts';
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
-import { getChatModel } from '@/lib/llm';
-import { createAgentTools } from '@/lib/tools';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { AgentExecutor, createOpenAIToolsAgent } from 'langchain/agents';
+import { getChatModel } from '../llm';
+import { createAgentTools } from '../tools';
 
-interface AgentMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
+const AGENT_SYSTEM_PROMPT = `You are a helpful assistant named AiDevOps Concierge.
+You have access to a number of tools to help answer user questions.
+Your primary tools are a knowledge base retriever for internal documents and a web search tool for public information.
+When asked a question, first decide if you can answer it from the conversation history.
+If not, decide which tool is most appropriate.
+If the user is asking about internal projects, code, or documents, use the 'knowledge-base-retriever'.
+For general questions, news, or public information, use the 'tavily_search_results_json'.
+For weather, use the 'weather-lookup' tool.
+Always respond to the user in a helpful and friendly tone.`;
 
-/**
- * The Concierge Agent, refactored to use the ReAct (Reasoning and Acting) pattern.
- * It can reason about which tools to use (like RAG or weather) to answer a query.
- */
-export async function conciergeAgent(
-  messages: AgentMessage[],
-  currentModel: string,
-  userId: string, // For potential user-specific RAG
-): Promise<string> {
-  const userQuery = messages[messages.length - 1]?.content;
+export async function createConciergeAgent(userId: string, modelName: string) {
+  const llm = getChatModel('openai', modelName);
+  const tools = createAgentTools(userId);
 
-  if (!userQuery) {
-    return "I didn't receive a query. How can I help you?";
-  }
+  const prompt = await ChatPromptTemplate.fromMessages([
+    ['system', AGENT_SYSTEM_PROMPT],
+    ['placeholder', '{chat_history}'],
+    ['human', '{input}'],
+    ['placeholder', '{agent_scratchpad}'],
+  ]);
 
-  try {
-    // 1. Determine provider and model name from currentModel string
-    let provider: string;
-    let modelName: string;
+  const agent = await createOpenAIToolsAgent({
+    llm,
+    tools,
+    prompt,
+  });
 
-    if (currentModel.startsWith('gpt-')) {
-      provider = 'openai';
-      modelName = currentModel;
-    } else if (currentModel.startsWith('gemini-')) {
-      provider = 'gemini';
-      modelName = currentModel;
-    } else {
-      provider = 'ollama';
-      modelName = process.env.LLM_MODEL_NAME || 'llama3'; // Fallback for 'llama-local'
-    }
-
-    // 2. Get the appropriate LLM instance and the ReAct prompt
-    const llm = getChatModel(provider, modelName);
-    const prompt = await pull<ChatPromptTemplate>('hwchase17/react-chat');
-
-    // Create tools for the agent, passing the userId for RAG context
-    const tools = createAgentTools(userId);
-
-    // 3. Create the ReAct agent
-    const agent = await createReactAgent({
-      llm,
-      tools,
-      prompt,
-    });
-    // 4. Create the Agent Executor with the dynamically created tools
-    const agentExecutor = new AgentExecutor({
-      agent,
-      tools,
-      verbose: process.env.NODE_ENV === 'development', // Log agent steps in dev
-    });
-
-    // 5. Convert message history to LangChain's format
-    const chat_history = messages.slice(0, -1).map((msg) => {
-      return msg.role === 'user'
-        ? new HumanMessage(msg.content)
-        : new AIMessage(msg.content);
-    });
-
-    // 6. Invoke the agent
-    const result = await agentExecutor.invoke({
-      input: userQuery,
-      chat_history,
-    });
-
-    return result.output;
-  } catch (error) {
-    console.error('Error in Concierge ReAct Agent:', error);
-    return 'An error occurred while processing your request. Please check the server logs.';
-  }
+  return new AgentExecutor({
+    agent,
+    tools,
+    verbose: process.env.NODE_ENV === 'development', // Enable logging in dev
+  });
 }

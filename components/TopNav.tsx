@@ -1,8 +1,10 @@
+'use client';
+
 import React from 'react';
-import { useStore } from '@/lib/store'; // Assuming a Zustand or similar store for global state
+import { useModalStore } from '@/lib/store';
 
 export function TopNav() {
-  const { openDocumentUploadModal } = useStore();
+  const { openModal } = useModalStore();
 
   return (
     <nav className="flex items-center justify-between p-4 bg-gray-800 shadow-md">
@@ -10,7 +12,7 @@ export function TopNav() {
       <div className="flex items-center space-x-4">
         {/* Existing navigation items can go here */}
         <button
-          onClick={openDocumentUploadModal}
+          onClick={openModal}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           Upload Document

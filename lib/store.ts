@@ -1,13 +1,15 @@
+'use client';
+
 import { create } from 'zustand';
 
-interface AppState {
-  isDocumentUploadModalOpen: boolean;
-  openDocumentUploadModal: () => void;
-  closeDocumentUploadModal: () => void;
+interface ModalState {
+  isModalOpen: boolean;
+  openModal: () => void;
+  closeModal: () => void;
 }
 
-export const useStore = create<AppState>((set) => ({
-  isDocumentUploadModalOpen: false,
-  openDocumentUploadModal: () => set({ isDocumentUploadModalOpen: true }),
-  closeDocumentUploadModal: () => set({ isDocumentUploadModalOpen: false }),
+export const useModalStore = create<ModalState>((set) => ({
+  isModalOpen: false,
+  openModal: () => set({ isModalOpen: true }),
+  closeModal: () => set({ isModalOpen: false }),
 }));
