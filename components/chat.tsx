@@ -3,20 +3,30 @@
 import { useChatContext } from '@/lib/chatContext';
 import { AutoGrowingTextarea } from '@/components/AutoGrowingTextarea';
 import { Button } from '@/components/button';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export function Chat() {
   // Use the shared state from ChatPanel so dashboard actions work
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChatContext();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
 
   return (
-    <div className="flex flex-col h-auto bg-panel transition-all duration-300">
+    <div className="flex flex-col h-full bg-panel transition-all duration-300 overflow-hidden">
       {/* Messages Area - Fills space */}
-      <div className="p-4">
+      <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-4 max-w-full">
           {messages.map(m => (
             <div 
               key={m.id} 
+              suppressHydrationWarning
               className={`message-bubble ${m.role} flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
             >
               <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${
@@ -42,6 +52,7 @@ export function Chat() {
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 

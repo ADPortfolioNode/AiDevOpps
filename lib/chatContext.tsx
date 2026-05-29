@@ -8,6 +8,7 @@ interface ChatContextType {
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement> | React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  setInput: (value: string) => void;
   append: (message: AIMessage) => void;
   isLoading: boolean;
 }

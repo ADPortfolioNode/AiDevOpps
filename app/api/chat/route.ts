@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { HumanMessage, AIMessage, BaseMessage } from '@langchain/core/messages';
+import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import { addConversationMessage, addTimelineEvent } from '@/lib/serverCache';
 import { createConciergeAgent } from '@/lib/agents/conciergeAgent';
 import { ChatMessageHistory } from 'langchain/stores/message/in_memory';
+import { v4 as uuidv4 } from 'uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,26 +16,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No messages provided' }, { status: 400 });
     }
 
-    const lastMessageContent = messages[messages.length - 1].content;
-    addTimelineEvent('User Message', `User sent: "${lastMessageContent.substring(0, 50)}..."`);
+    const currentMessage = messages[messages.length - 1];
+    const previousMessages = messages.slice(0, -1);
 
     // The user ID should come from an authentication system in a real app
     const userId = 'user-123';
 
-    // Convert the messages to the format LangChain expects
-    const conversationMessages: BaseMessage[] = messages.map((msg: any) => {
-      if (msg.role === 'user') {
-        return new HumanMessage(msg.content);
-      } else {
-        return new AIMessage(msg.content);
-      }
+    // Add user message to server-side history
+    addConversationMessage({
+      id: currentMessage.id || uuidv4(),
+      role: 'user',
+      content: currentMessage.content,
+      createdAt: new Date(),
     });
-    
-    // Separate the last user message for the agent's 'input'
-    const currentInput = conversationMessages.pop()?.content as string;
+    addTimelineEvent('User Message', `User sent: "${currentMessage.content.substring(0, 50)}..."`);
 
     // Use LangChain's in-memory history for the agent
-    const chatHistory = new ChatMessageHistory(conversationMessages);
+    const chatHistory = new ChatMessageHistory();
+    for (const msg of previousMessages) {
+        if (msg.role === 'user') {
+            await chatHistory.addMessage(new HumanMessage(msg.content));
+        } else if (msg.role === 'assistant') {
+            await chatHistory.addMessage(new AIMessage(msg.content));
+        }
+    }
 
     // Create the agent executor
     const agentExecutor = await createConciergeAgent(userId, modelName);
@@ -42,13 +47,13 @@ export async function POST(request: NextRequest) {
     // Generate response
     addTimelineEvent('Agent Invoked', `Concierge agent is processing the query...`);
     const response = await agentExecutor.invoke({
-      input: currentInput,
+      input: currentMessage.content,
       chat_history: await chatHistory.getMessages(),
     });
 
     const assistantMessage = response.output;
     
-    // Store in cache
+    // Store assistant response in server-side cache
     const assistantMessageRecord = {
       id: `msg_${Date.now()}`,
       role: 'assistant' as const,
@@ -59,8 +64,9 @@ export async function POST(request: NextRequest) {
 
     addTimelineEvent('Assistant Response', `Assistant replied to user query`);
 
+    // Return the response for the client
     return NextResponse.json({
-      id: `msg-${Date.now()}`,
+      id: assistantMessageRecord.id,
       role: 'assistant',
       content: assistantMessage,
     });
@@ -71,8 +77,12 @@ export async function POST(request: NextRequest) {
     
     addTimelineEvent('Error', `Chat error: ${errorMessage}`);
 
+    // Ensure a consistent error response format
     return NextResponse.json(
-      { error: `Chat error: ${errorMessage}` },
+      { 
+        error: 'An internal error occurred.',
+        details: errorMessage 
+      },
       { status: 500 }
     );
   }

@@ -66,4 +66,25 @@ test.describe('Core API Workflows and URL Accessibility', () => {
     const responseBody = await response.json();
     expect(responseBody.message).toContain('Successfully ingested');
   });
+
+  test('should perform a full chat interaction via the UI', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Find a quick action prompt and click it
+    const quickActionPromptText = 'What are the next steps for the "Website Redesign" project?';
+    const quickActionPrompt = page.locator(`text=${quickActionPromptText}`);
+    await quickActionPrompt.click();
+
+    // 2. Verify the chat input is populated
+    const chatInput = page.locator('textarea[placeholder*="Ask a question"]');
+    await expect(chatInput).toHaveValue(quickActionPromptText);
+
+    // 3. Submit the form
+    await page.locator('button[type="submit"]').click();
+
+    // 4. Wait for and verify the assistant's response
+    const assistantResponse = page.locator('.message-bubble.assistant').last();
+    await expect(assistantResponse).toBeVisible({ timeout: 15000 }); // Wait up to 15s for the agent
+    await expect(assistantResponse).not.toBeEmpty();
+  });
 });

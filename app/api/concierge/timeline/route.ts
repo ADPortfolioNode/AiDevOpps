@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server';
+import { getTimelineEvents } from '@/lib/serverCache';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const timeline = [
-    {
-      id: 't-1',
-      title: 'Vector Index Updated',
-      details: 'Ingested 45 documentation nodes for enhanced RAG retrieval.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    },
-    {
-      id: 't-2',
-      title: 'Heuristic Drift Detected',
-      details: 'Anomalous token usage pattern identified in cluster node US-EAST-1.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-    }
-  ];
-  return NextResponse.json({ timeline });
+  try {
+    const timeline = getTimelineEvents();
+    return NextResponse.json({ timeline });
+  } catch (error) {
+    console.error('[Timeline API Error]', error);
+    return new NextResponse(
+      JSON.stringify({ error: 'Failed to fetch timeline events.' }),
+      { status: 500 }
+    );
+  }
 }
