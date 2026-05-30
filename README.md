@@ -1,13 +1,12 @@
 # AiDevOps - AI Operations Management Dashboard
 
-AiDevOps is a Next.js dashboard for AI Operations Management, featuring a powerful chat UI, quick actions, and integrated Retrieval-Augmented Generation (RAG) with Pinecone and OpenAI. It is designed to be run in a production-like environment using Docker.
+AiDevOps is a Next.js dashboard for AI Operations Management, featuring a powerful chat UI and integrated Retrieval-Augmented Generation (RAG) with Pinecone and OpenAI. It is designed to be run in a production environment using Docker.
 
 ## Features
 
 - **Next.js App Router:** Modern and performant React framework.
 - **Production-Ready Agent:** Powered by LangChain and OpenAI for robust and extensible functionality.
 - **Interactive Chat UI:** Engage with AI assistants for various tasks.
-- **Cloud-Native RAG with Pinecone:** Enhance AI responses with context from your own documents using a scalable, production-ready vector store.
 - **Document Upload:** Easily ingest PDFs, text files, and URLs into your knowledge base.
 - **Simplified UI:** Built with plain Tailwind CSS to remain lightweight and avoid heavy component library dependencies.
 - **Agentic Architecture:** Concierge acts as an administrator, coordinating specialized assistants.
@@ -30,7 +29,7 @@ cd aidevops
 
 ### 2. Environment Variables
 
-Create a `.env.local` file in the root of your project. You can copy the example file as a starting point:
+Create a `.env.local` file in the root of your project by copying the example file:
 
 ```bash
 cp .env.local.example .env.local
@@ -85,10 +84,6 @@ Use the "Upload Document" button in the top navigation bar to open the document 
 ### 6. Interact with the Concierge Agent
 
 Start a chat and ask questions (e.g., "Summarize the key points from the document about project phoenix"). The Concierge agent will automatically use its tools (like the Knowledge Base Retriever or Web Search) to find relevant information and answer your query.
-
-## Deployment to Vercel
-
-For Vercel deployment, the Next.js application can be deployed directly. You will need to configure the `PINECONE_API_KEY`, `PINECONE_INDEX`, and your chosen LLM provider API keys in the Vercel project's environment variables.
 
 ## Project Structure
 
