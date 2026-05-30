@@ -4,6 +4,15 @@ import { cn } from '@/lib/utils';
 import { CollapsiblePanel } from './CollapsiblePanel';
 import { Timeline } from './Timeline';
 
+function StatCard({ value, label, color }: { value: string | number, label: string, color: string }) {
+  return (
+    <div>
+      <p className={cn("text-3xl font-semibold", color)}>{value}</p>
+      <p className="text-xs text-slate-400">{label}</p>
+    </div>
+  );
+}
+
 export function DashboardPanels() {
   const stats = getStats();
   const workflows = getWorkflows();
@@ -19,9 +28,9 @@ export function DashboardPanels() {
       <div className="space-y-8">
         <CollapsiblePanel title="System Stats">
           <div className="grid grid-cols-3 gap-4 text-center">
-            <div><p className="text-3xl font-semibold text-blue-400">{stats.tasks}</p><p className="text-xs text-slate-400">Tasks</p></div>
-            <div><p className="text-3xl font-semibold text-green-400">{stats.hitRate}%</p><p className="text-xs text-slate-400">Hit Rate</p></div>
-            <div><p className="text-3xl font-semibold text-yellow-400">${stats.cost.toFixed(2)}</p><p className="text-xs text-slate-400">Cost</p></div>
+            <StatCard value={stats.tasks} label="Tasks" color="text-blue-400" />
+            <StatCard value={`${stats.hitRate}%`} label="Hit Rate" color="text-green-400" />
+            <StatCard value={`$${stats.cost.toFixed(2)}`} label="Cost" color="text-yellow-400" />
           </div>
         </CollapsiblePanel>
         <CollapsiblePanel title="Automated Workflows">

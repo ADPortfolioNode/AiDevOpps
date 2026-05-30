@@ -5,7 +5,10 @@ WORKDIR /app
 
 # Install dependencies based on package-lock.json
 COPY package.json package-lock.json* ./
-RUN npm install --legacy-peer-deps
+# Retry npm install to be more resilient to transient network errors like ECONNRESET.
+RUN (npm install --legacy-peer-deps) \
+    || (echo "First npm install attempt failed, retrying in 5 seconds..." && sleep 5 && npm install --legacy-peer-deps) \
+    || (echo "Second npm install attempt failed, retrying in 5 seconds..." && sleep 5 && npm install --legacy-peer-deps)
 
 # Stage 2: Build the application
 FROM node:20-alpine AS builder

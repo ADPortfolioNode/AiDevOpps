@@ -1,38 +1,44 @@
-import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { AgentExecutor, createOpenAIToolsAgent } from 'langchain/agents';
-import { getChatModel } from '../llm';
-import { createAgentTools } from '../tools';
+import { ChatOpenAI } from '@langchain/openai';
+import { AgentExecutor, createOpenAIFunctionsAgent } from 'langchain/agents';
+import {
+  SystemMessage,
+  HumanMessage,
+} from '@langchain/core/messages';
+import {
+  ChatPromptTemplate,
+  MessagesPlaceholder,
+} from '@langchain/core/prompts';
+import { createTools } from '../tools';
+import { addTimelineEvent } from '../serverCache';
 
-const AGENT_SYSTEM_PROMPT = `You are a helpful assistant named AiDevOps Concierge.
-You have access to a number of tools to help answer user questions.
-Your primary tools are a knowledge base retriever for internal documents and a web search tool for public information.
-When asked a question, first decide if you can answer it from the conversation history.
-If not, decide which tool is most appropriate.
-If the user is asking about internal projects, code, or documents, use the 'knowledge-base-retriever'.
-For general questions, news, or public information, use the 'tavily_search_results_json'.
-For weather, use the 'weather-lookup' tool.
-Always respond to the user in a helpful and friendly tone.`;
+const CONCIERGE_PROMPT = `You are AiDevOpps, a helpful AI assistant for managing software development operations.
+Your role is to act as a concierge, using your available tools to answer questions and perform tasks.
+When searching the knowledge base, be concise and directly answer the user's question based on the retrieved context.
+If the knowledge base does not contain the answer, say so. Do not make up information.
+Always be professional and helpful.`;
 
-export async function createConciergeAgent(userId: string, modelName: string) {
-  const llm = getChatModel('openai', modelName);
-  const tools = createAgentTools(userId);
+export const createConciergeAgent = async (userId: string, modelName: string) => {
+  addTimelineEvent('Agent Creation', `Initializing Concierge Agent with model: ${modelName}`);
+  const llm = new ChatOpenAI({
+    modelName,
+    temperature: 0,
+    streaming: true,
+  });
 
-  const prompt = await ChatPromptTemplate.fromMessages([
-    ['system', AGENT_SYSTEM_PROMPT],
-    ['placeholder', '{chat_history}'],
-    ['human', '{input}'],
-    ['placeholder', '{agent_scratchpad}'],
+  const tools = createTools(userId);
+
+  const prompt = ChatPromptTemplate.fromMessages([
+    new SystemMessage(CONCIERGE_PROMPT),
+    new MessagesPlaceholder('chat_history'),
+    new HumanMessage('{input}'),
+    new MessagesPlaceholder('agent_scratchpad'),
   ]);
 
-  const agent = await createOpenAIToolsAgent({
-    llm,
-    tools,
-    prompt,
-  });
+  const agent = await createOpenAIFunctionsAgent({ llm, tools, prompt });
 
   return new AgentExecutor({
     agent,
     tools,
-    verbose: process.env.NODE_ENV === 'development', // Enable logging in dev
+    verbose: process.env.NODE_ENV === 'development',
   });
-}
+};

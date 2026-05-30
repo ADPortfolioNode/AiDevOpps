@@ -1,39 +1,39 @@
 # AiDevOps - AI Operations Management Dashboard
 
-AiDevOps is a Next.js App Router dashboard designed for AI Operations Management, featuring a multi-provider LLM system, chat UI, quick action cards, and integrated Retrieval-Augmented Generation (RAG) with Pinecone.
+AiDevOps is a Next.js dashboard for AI Operations Management, featuring a powerful chat UI, quick actions, and integrated Retrieval-Augmented Generation (RAG) with Pinecone and OpenAI. It is designed to be run in a production-like environment using Docker.
 
 ## Features
 
 - **Next.js App Router:** Modern and performant React framework.
-- **Multi-provider LLM Support:** Seamlessly switch between OpenAI, Gemini, and local Ollama models.
+- **Production-Ready Agent:** Powered by LangChain and OpenAI for robust and extensible functionality.
 - **Interactive Chat UI:** Engage with AI assistants for various tasks.
-- **Quick Action Cards:** Streamlined access to common operations.
 - **Cloud-Native RAG with Pinecone:** Enhance AI responses with context from your own documents using a scalable, production-ready vector store.
 - **Document Upload:** Easily ingest PDFs, text files, and URLs into your knowledge base.
 - **Simplified UI:** Built with plain Tailwind CSS to remain lightweight and avoid heavy component library dependencies.
 - **Agentic Architecture:** Concierge acts as an administrator, coordinating specialized assistants.
 - **Docker-Compose Setup:** Run the entire application stack (Next.js, local Ollama) with a single command.
+- **End-to-End Testing:** Includes a full suite of Playwright tests for core user workflows.
 
 ## Getting Started
 
 ### Prerequisites
 
 - Docker and Docker Compose installed.
-- Node.js (v18 or higher) and npm.
+- Node.js (v20 or higher) and npm.
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/ADPortfolioNode/AiDevOpps.git
-cd AiDevOps
+git clone https://github.com/ADPortfolioNode/AiDevOpps.git aidevops
+cd aidevops
 ```
 
 ### 2. Environment Variables
 
-Create a `.env.local` file in the root of your project based on `.env.local.example`:
+Create a `.env.local` file in the root of your project. You can copy the example file as a starting point:
 
 ```bash
-cp .env.example .env.local
+cp .env.local.example .env.local
 ```
 
 Edit `.env.local` and configure your LLM API keys and RAG settings:
@@ -153,32 +153,11 @@ npm run test:e2e
 
 ## Troubleshooting
 
-### Build Fails with Missing Dependencies
-
-Ensure you've installed dependencies with the `--legacy-peer-deps` flag:
-```bash
-npm install --legacy-peer-deps
-```
-
 ### Document Upload Not Working
 
-1. Verify you have set `PINECONE_API_KEY` and `PINECONE_INDEX` in your `.env.local` file.
-2. Ensure your Pinecone index is created and has the correct dimension for your chosen embedding model.
-   - `text-embedding-ada-002` (OpenAI): **1536**
-   - `nomic-embed-text` (Ollama): **768**
-   - `embedding-001` (Gemini): **768**
-3. Ensure your embedding model is configured correctly (`EMBEDDING_MODEL_NAME`).
-
-### Modal Doesn't Open
-
-If the document upload modal doesn't appear when clicking "Upload Document", check:
-- TopNav component is marked as a client component (`'use client'` at the top of the file).
-- `lib/store.ts` is also marked as a client component (it is—required for Zustand hooks).
+1.  Verify you have set `OPENAI_API_KEY`, `PINECONE_API_KEY`, and `PINECONE_INDEX` in your `.env.local` file.
+2.  Ensure your Pinecone index is created and has the correct dimension for your chosen embedding model. The default OpenAI model (`text-embedding-ada-002`) requires a dimension of **1536**.
 
 ## Contributing
 
 Contributions are welcome! Please follow the existing code style and submit pull requests.
-
-## License
-
-This project is licensed under the MIT License.

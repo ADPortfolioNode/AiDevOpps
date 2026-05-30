@@ -1,30 +1,26 @@
 import { DynamicTool } from '@langchain/core/tools';
 import { retrieveContext } from './agents/ragAssistant';
+import { addTimelineEvent } from './serverCache'; // Adjust if path is different
 
 /**
- * Creates and returns the tools that the Concierge agent can use.
- * This includes a dynamic tool for retrieving information from the knowledge base.
- * @param userId The ID of the user, for multi-tenant RAG.
- * @returns An array of tools for the agent.
+ * Creates the set of tools for the agent, including a RAG tool
  */
-export function createAgentTools(userId: string) {
-  const knowledgeBaseRetriever = new DynamicTool({
-    name: 'knowledge-base-retriever',
-    description:
-      'Use this tool to find information about internal projects, documentation, and user-specific files. Provide a detailed query about what you are looking for.',
+export function createTools(userId?: string) {
+  const ragTool = new DynamicTool({
+    name: "knowledge_base_search",
+    description: "Search the user's private knowledge base for relevant context. Use this tool first for any question that might relate to uploaded documents or company data.",
     func: async (input: string) => {
       try {
         const context = await retrieveContext(input, userId);
-        return context.join('\n\n---\n\n');
+        addTimelineEvent('RAG Search', `Retrieved context for: ${input.substring(0, 50)}...`);
+        // The 'retrieveContext' function returns a pre-formatted string, so we return it directly.
+        return context;
       } catch (error) {
         console.error('Error using knowledge base retriever:', error);
         return 'An error occurred while searching the knowledge base.';
       }
     },
   });
-
-  // In the future, other tools like web search (Tavily) or weather lookups can be added here.
-  const tools = [knowledgeBaseRetriever];
-
-  return tools;
+  
+  return [ragTool];
 }

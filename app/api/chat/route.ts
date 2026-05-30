@@ -3,12 +3,33 @@ import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import { addConversationMessage, addTimelineEvent } from '@/lib/serverCache';
 import { createConciergeAgent } from '@/lib/agents/conciergeAgent';
 import { ChatMessageHistory } from 'langchain/stores/message/in_memory';
+import { StreamingTextResponse, LangChainStream } from 'ai';
 import { v4 as uuidv4 } from 'uuid';
 
 export const dynamic = 'force-dynamic';
 
+// TODO: Replace with your actual authentication logic.
+// This is a placeholder to allow the application to build and run.
+const getAuthSession = async () => {
+  return Promise.resolve({ user: { id: 'anonymous-user' } });
+};
+
 export async function POST(request: NextRequest) {
   try {
+    const { stream, handlers } = LangChainStream({
+      onFinal: async (completion) => {
+        // Store final assistant response in server-side cache after the stream is complete
+        const assistantMessageRecord = {
+          id: `msg_${Date.now()}`,
+          role: 'assistant' as const,
+          content: completion,
+          createdAt: new Date(),
+        };
+        addConversationMessage(assistantMessageRecord);
+        addTimelineEvent('Assistant Response', `Assistant finished streaming response.`);
+      },
+    });
+
     const body = await request.json();
     const { messages, model: modelName = 'gpt-4o-mini' } = body;
 
@@ -19,8 +40,12 @@ export async function POST(request: NextRequest) {
     const currentMessage = messages[messages.length - 1];
     const previousMessages = messages.slice(0, -1);
 
-    // The user ID should come from an authentication system in a real app
-    const userId = 'user-123';
+    // Get the current user session
+    const session = await getAuthSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
 
     // Add user message to server-side history
     addConversationMessage({
@@ -44,45 +69,29 @@ export async function POST(request: NextRequest) {
     // Create the agent executor
     const agentExecutor = await createConciergeAgent(userId, modelName);
     
-    // Generate response
+    // Invoke the agent and stream the response
     addTimelineEvent('Agent Invoked', `Concierge agent is processing the query...`);
-    const response = await agentExecutor.invoke({
+    agentExecutor.invoke({
       input: currentMessage.content,
       chat_history: await chatHistory.getMessages(),
+    }, {
+      callbacks: [handlers], // Pass the stream handlers to the agent
     });
 
-    const assistantMessage = response.output;
-    
-    // Store assistant response in server-side cache
-    const assistantMessageRecord = {
-      id: `msg_${Date.now()}`,
-      role: 'assistant' as const,
-      content: String(assistantMessage),
-      createdAt: new Date(),
-    };
-    addConversationMessage(assistantMessageRecord);
-
-    addTimelineEvent('Assistant Response', `Assistant replied to user query`);
-
-    // Return the response for the client
-    return NextResponse.json({
-      id: assistantMessageRecord.id,
-      role: 'assistant',
-      content: assistantMessage,
-    });
+    return new StreamingTextResponse(stream);
 
   } catch (error) {
     console.error('Chat API error:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    
+
     addTimelineEvent('Error', `Chat error: ${errorMessage}`);
+
+    const isDevelopment = process.env.NODE_ENV === 'development';
 
     // Ensure a consistent error response format
     return NextResponse.json(
-      { 
-        error: 'An internal error occurred.',
-        details: errorMessage 
-      },
+      // In development, send the detailed error message to the client to aid in debugging.
+      { error: isDevelopment ? `Agent Error: ${errorMessage}` : 'An internal error occurred.' },
       { status: 500 }
     );
   }

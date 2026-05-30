@@ -1,14 +1,21 @@
-import 'server-only';
-import { semanticSearch } from '@/lib/vectorStore';
+// lib/agents/ragAssistant.ts
+import { semanticSearch } from '../vectorStore';
 
-/**
- * The RAG Assistant is responsible for retrieving relevant context
- * from the vector store based on a user query.
- * @param query The user's query.
- * @param userId Optional user ID for potential user-specific knowledge bases.
- * @returns An array of relevant document chunks (strings).
- */
-export async function retrieveContext(query: string, userId?: string): Promise<string[]> {
-  // This is now a simple wrapper around the semanticSearch function.
-  return semanticSearch(query, userId);
+export async function retrieveContext(query: string, userId?: string): Promise<string> {
+  try {
+    console.log(`[RAG] Retrieving context for query: "${query}"`);
+
+    const searchResults = await semanticSearch(query, userId);
+
+    if (searchResults.length === 0) {
+      return "No relevant documents found in the knowledge base.";
+    }
+
+    return searchResults
+      .map((doc, i) => `Source ${i + 1}:\n${doc}`)
+      .join("\n\n---\n\n");
+  } catch (error) {
+    console.error('[RAG] Retrieval error:', error);
+    return "Unable to retrieve relevant context at this time.";
+  }
 }

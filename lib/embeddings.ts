@@ -1,37 +1,24 @@
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
-import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
+import { Embeddings } from '@langchain/core/embeddings';
 
-const EMBEDDING_MODEL_NAME = process.env.EMBEDDING_MODEL_NAME || 'nomic-embed-text';
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const EMBEDDING_MODEL_NAME = process.env.EMBEDDING_MODEL_NAME || 'text-embedding-ada-002';
 
-let embeddingsInstance: OpenAIEmbeddings | OllamaEmbeddings | GoogleGenerativeAIEmbeddings | null = null;
+let embeddingsInstance: Embeddings | null = null;
 
 /**
- * Initializes and returns the appropriate embedding model based on configuration.
- * Supports OpenAI, Gemini, and Ollama (for local models).
+ * Initializes and returns a singleton instance of the embedding model.
+ * For this production-ready build, we are focusing on OpenAIEmbeddings.
  */
-export function getEmbeddingModel() {
+export function getEmbeddingModel(): Embeddings {
   if (!embeddingsInstance) {
-    if (EMBEDDING_MODEL_NAME.startsWith('text-embedding-') && OPENAI_API_KEY) {
-      embeddingsInstance = new OpenAIEmbeddings({
-        modelName: EMBEDDING_MODEL_NAME,
-        openAIApiKey: OPENAI_API_KEY,
-      });
-    } else if (EMBEDDING_MODEL_NAME.startsWith('embedding-') && GEMINI_API_KEY) {
-      embeddingsInstance = new GoogleGenerativeAIEmbeddings({
-        apiKey: GEMINI_API_KEY,
-        model: EMBEDDING_MODEL_NAME,
-      });
-    } else {
-      // Default to Ollama for local embeddings
-      embeddingsInstance = new OllamaEmbeddings({
-        model: EMBEDDING_MODEL_NAME,
-        baseUrl: OLLAMA_BASE_URL,
-      });
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not set. Please add it to your .env.local file.');
     }
+    embeddingsInstance = new OpenAIEmbeddings({
+      modelName: EMBEDDING_MODEL_NAME,
+      openAIApiKey: OPENAI_API_KEY,
+    });
   }
   return embeddingsInstance;
 }

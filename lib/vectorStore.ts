@@ -1,7 +1,7 @@
 // lib/vectorStore.ts
 import { Pinecone } from '@pinecone-database/pinecone';
 import { PineconeStore } from '@langchain/pinecone';
-import { OpenAIEmbeddings } from '@langchain/openai';
+import { getEmbeddingModel } from './embeddings';
 import { Document } from '@langchain/core/documents';
 
 let vectorStore: PineconeStore | null = null;
@@ -19,7 +19,7 @@ export async function getVectorStore() {
     const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
     const index = pc.index(process.env.PINECONE_INDEX);
 
-    const embeddings = new OpenAIEmbeddings();
+    const embeddings = getEmbeddingModel();
 
     vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
       pineconeIndex: index,

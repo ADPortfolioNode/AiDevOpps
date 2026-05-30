@@ -87,4 +87,27 @@ test.describe('Core API Workflows and URL Accessibility', () => {
     await expect(assistantResponse).toBeVisible({ timeout: 15000 }); // Wait up to 15s for the agent
     await expect(assistantResponse).not.toBeEmpty();
   });
+
+  test('should handle document upload via URL from the UI', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Open the document upload modal
+    await page.locator('button:has-text("Upload Document")').click();
+    const modalTitle = page.locator('h2:has-text("Upload to Knowledge Base")');
+    await expect(modalTitle).toBeVisible();
+
+    // 2. Switch to the URL tab and fill in the input
+    await page.locator('button:has-text("From URL")').click();
+    const urlInput = page.locator('input[type="url"]');
+    await expect(urlInput).toBeVisible();
+    await urlInput.fill('https://info.cern.ch/hypertext/WWW/TheProject.html');
+
+    // 3. Submit the form and wait for the success feedback
+    await page.locator('button:has-text("Ingest")').click();
+    const feedbackMessage = page.locator('p:text-matches("Successfully ingested URL")');
+    await expect(feedbackMessage).toBeVisible({ timeout: 10000 });
+
+    // 4. Verify the modal closes automatically after success
+    await expect(modalTitle).not.toBeVisible({ timeout: 5000 });
+  });
 });

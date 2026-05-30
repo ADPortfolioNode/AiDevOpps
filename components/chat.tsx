@@ -1,13 +1,15 @@
+// components/chat.tsx
 'use client';
 
-import { useChatContext } from '@/lib/chatContext';
-import { AutoGrowingTextarea } from '@/components/AutoGrowingTextarea';
-import { Button } from '@/components/button';
 import React, { useEffect, useRef } from 'react';
+import ReactMarkdown, { type Options } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { useChatContext } from '@/lib/chatContext';
+import { CodeBlock } from './CodeBlock';
 
 export function Chat() {
-  // Use the shared state from ChatPanel so dashboard actions work
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChatContext();
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error, reload } = useChatContext();
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -16,71 +18,110 @@ export function Chat() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages, isLoading, error]);
+
+  const markdownComponents: Options['components'] = {
+    // The `code` component from react-markdown receives special props like `inline`.
+    // TypeScript's inference can struggle with this. Using `any` for the props
+    // is a pragmatic and targeted workaround to resolve this specific build error.
+    code({ node, inline, className, children, ...props }: any) {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline && match ? (
+        <CodeBlock language={match[1]} value={String(children).replace(/\n$/, '')} {...props} />
+      ) : (
+        <code className="text-xs bg-slate-700/50 rounded px-1 py-0.5" {...props}>
+          {children}
+        </code>
+      );
+    },
+  };
 
   return (
-    <div className="flex flex-col h-full bg-panel transition-all duration-300 overflow-hidden">
-      {/* Messages Area - Fills space */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-4 max-w-full">
-          {messages.map(m => (
-            <div 
-              key={m.id} 
-              suppressHydrationWarning
-              className={`message-bubble ${m.role} flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
+    <div className="flex flex-col h-full bg-gray-950">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {messages.length === 0 && !isLoading && !error && (
+          <div className="text-center text-gray-500 mt-12">
+            Start a conversation with the AI Concierge
+          </div>
+        )}
+        
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[75%] p-4 rounded-2xl ${
+                msg.role === 'user'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-100'
+              }`}
             >
-              <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${
-                m.role === 'user' 
-                  ? 'bg-blue-600 text-white rounded-tr-none' 
-                  : 'bg-slate-800 text-slate-100 rounded-tl-none border border-white/5'
-              }`}>
-                <div className="font-bold mb-1 text-[10px] uppercase tracking-wider opacity-50">
-                  {m.role === 'user' ? 'You' : 'AiDevOpps'}
-                </div>
-                <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+              <div className="prose prose-sm prose-invert max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={markdownComponents}
+                >
+                  {msg.content}
+                </ReactMarkdown>
               </div>
             </div>
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="max-w-[85%] p-3 rounded-2xl text-sm bg-slate-800 text-slate-100 rounded-tl-none border border-white/5">
-                <div className="flex gap-1 py-1 px-1">
-                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-duration:0.8s]" />
-                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.2s]" />
-                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.4s]" />
-                </div>
+          </div>
+        ))}
+
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] p-3 rounded-2xl bg-gray-800 text-gray-100">
+              <div className="flex gap-1 py-1 px-1">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-duration:0.8s]" />
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.2s]" />
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.4s]" />
               </div>
             </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] p-4 rounded-2xl bg-red-900/50 text-red-300 border border-red-500/30">
+              <div className="font-bold mb-1 text-[10px] uppercase tracking-wider text-red-400">
+                An Error Occurred
+              </div>
+              <p className="text-xs mb-3 font-mono">{error.message}</p>
+              {reload && (
+                <button 
+                  onClick={() => reload()} 
+                  className="text-xs bg-red-500/30 hover:bg-red-500/50 px-3 py-1 rounded-md border border-red-500/50 transition-colors">
+                  Retry
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area - Fixed at bottom */}
-      <div className="p-4 border-t border-white/10 bg-panel/50 backdrop-blur-sm">
-        <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-slate-900/50 border border-white/10 rounded-xl p-2 focus-within:border-blue-500/50 transition-colors">
-          <AutoGrowingTextarea
+      {/* Input Area */}
+      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-800 bg-gray-900">
+        <div className="flex gap-3">
+          <input
+            type="text"
             value={input}
             onChange={handleInputChange}
-            placeholder="Ask a question or type a command..."
-            className="flex-1 px-2 py-1 min-h-[40px] text-slate-100"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                const form = (e.target as HTMLTextAreaElement).form;
-                if (form) form.requestSubmit();
-              }
-            }}
+            placeholder="Ask the Concierge anything..."
+            className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-xl px-5 py-3 focus:outline-none focus:border-blue-500"
+            disabled={isLoading}
           />
-          <Button 
-            type="submit" 
-            disabled={!input.trim()}
-            className="bg-blue-600 hover:bg-blue-500 text-white rounded-lg h-10 px-4"
+          <button
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            className="bg-blue-600 hover:bg-blue-700 px-8 rounded-xl font-medium disabled:opacity-50"
           >
             Send
-          </Button>
-        </form>
-      </div>
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
