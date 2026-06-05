@@ -102,14 +102,19 @@ export function DocumentUploadModal() {
   if (!isModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="upload-modal-title"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+    >
       <div className="relative w-full max-w-lg rounded-lg border border-zinc-700 bg-zinc-900 p-6 text-white shadow-xl">
         <button onClick={handleClose} className="absolute top-4 right-4 text-zinc-400 hover:text-white" aria-label="Close modal">
           <XIcon />
         </button>
 
-        <h2 className="text-xl font-semibold">Upload to Knowledge Base</h2>
-        <p className="mt-1 text-sm text-zinc-400">Upload files or scrape websites to add them to the agent's knowledge.</p>
+        <h2 id="upload-modal-title" className="text-xl font-semibold">Upload to Knowledge Base</h2>
+        <p className="mt-1 text-sm text-zinc-400">Upload files or scrape websites to add them to the agent&apos;s knowledge.</p>
 
         <div className="mt-4 flex border-b border-zinc-700">
           <button onClick={() => setUploadType('file')} className={`px-4 py-2 text-sm font-medium ${uploadType === 'file' ? 'border-b-2 border-blue-500 text-white' : 'text-zinc-400 hover:text-white'}`}>
@@ -124,7 +129,21 @@ export function DocumentUploadModal() {
           {uploadType === 'file' ? (
             <div>
               <label htmlFor="file-upload" className="block text-sm font-medium text-zinc-300">PDF or TXT file</label>
-              <input id="file-upload" name="file-upload" type="file" accept=".pdf,.txt" onChange={handleFileChange} className="mt-2 block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700" />
+              <label
+                htmlFor="file-upload"
+                className="mt-3 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-zinc-600 bg-zinc-800/50 px-6 py-8 text-center transition-colors hover:border-blue-500 hover:bg-zinc-800"
+              >
+                <span className="text-sm font-medium text-zinc-200">Click to upload</span>
+                <span className="mt-1 text-xs text-zinc-500">PDF or plain text (.txt)</span>
+              </label>
+              <input
+                id="file-upload"
+                name="file-upload"
+                type="file"
+                accept=".pdf,.txt"
+                onChange={handleFileChange}
+                className="sr-only"
+              />
               {file && <p className="mt-2 text-xs text-zinc-400">Selected: {file.name}</p>}
             </div>
           ) : (

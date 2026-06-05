@@ -4,9 +4,12 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:5000"
+      # Maps port 3000 on the host to port 3000 in the container.
+      # The container's port is set by the 'PORT' env var in the Dockerfile.
+      - "3000:3000"
     environment:
       - NODE_ENV=production
+      - PORT=3000
       - NEXT_TELEMETRY_DISABLED=1
     env_file:
       # Specifies the default environment file for the application container.

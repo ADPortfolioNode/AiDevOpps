@@ -1,22 +1,22 @@
-import { addToVectorStore } from "./vectorStore";
+import { addToVectorStore } from './vectorStore';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { TextLoader } from 'langchain/document_loaders/fs/text';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
-import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
-import type { Document } from '@langchain/core/documents';
+import { load } from 'cheerio';
+import { Document } from '@langchain/core/documents';
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 200;
 
+export class DocumentLoadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DocumentLoadError';
+  }
+}
+
 /**
- * This function acts as the "Task Assistant" for document processing.
- * It takes a document source (file or URL), loads it, splits it into chunks,
- * and stores them in the vector store.
- *
- * @param source The document source, which can be a File object or a URL string.
- * @param type The type of the source ('file' or 'url').
- * @param mimeType Optional mime type for file sources.
- * @param userId Optional user ID to associate with the document.
+ * Loads, chunks, and stores a document source in the vector store.
  */
 export async function processDocument(
   source: File | string,
@@ -26,17 +26,47 @@ export async function processDocument(
 ) {
   let docs: Document[];
 
-  if (type === 'url') {
-    const loader = new CheerioWebBaseLoader(source as string);
-    docs = await loader.load();
-  } else {
-    const file = source as File;
-    const blob = new Blob([file], { type: mimeType });
-    const loader =
-      mimeType === 'application/pdf'
-        ? new PDFLoader(blob)
-        : new TextLoader(blob);
-    docs = await loader.load();
+  try {
+    if (type === 'url') {
+      const response = await fetch(source as string, {
+        headers: { 'User-Agent': 'AiDevOps-Ingest/1.0' },
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!response.ok) {
+        throw new DocumentLoadError(`Failed to load URL: HTTP ${response.status}`);
+      }
+      const html = await response.text();
+      const $ = load(html);
+      $('script, style, noscript').remove();
+      const text = $('body').text().replace(/\s+/g, ' ').trim();
+      if (!text) {
+        throw new DocumentLoadError('Failed to load URL: no text content extracted');
+      }
+      docs = [
+        new Document({
+          pageContent: text,
+          metadata: { source: source as string },
+        }),
+      ];
+    } else {
+      const file = source as File;
+      const blob = new Blob([file], { type: mimeType });
+      const loader =
+        mimeType === 'application/pdf' ? new PDFLoader(blob) : new TextLoader(blob);
+      docs = await loader.load();
+    }
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    if (type === 'url') {
+      throw new DocumentLoadError(`Failed to load URL: ${detail}`);
+    }
+    throw new DocumentLoadError(`Failed to load file: ${detail}`);
+  }
+
+  if (!docs.length) {
+    throw new DocumentLoadError(
+      type === 'url' ? 'Failed to load URL: no content extracted' : 'Failed to load file: empty document',
+    );
   }
 
   const textSplitter = new RecursiveCharacterTextSplitter({
@@ -46,7 +76,6 @@ export async function processDocument(
 
   const splits = await textSplitter.splitDocuments(docs);
 
-  // Add user ID and other metadata to each chunk
   splits.forEach((split) => {
     split.metadata = split.metadata || {};
     if (userId) {
@@ -58,6 +87,5 @@ export async function processDocument(
     }
   });
 
-  // Use the LangChain vector store to add documents, which handles embedding.
-  await addToVectorStore(splits);
+  await addToVectorStore(splits, userId);
 }

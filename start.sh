@@ -7,8 +7,6 @@ set -e
 PORT=3000
 PRUNE=false
 YES_CONFIRM=false
-DIAGNOSTICS=false
-WITH_LOCAL_LLM=false
 SHOW_LOGS=false
 FORCE_BUILD=true
 
@@ -18,10 +16,8 @@ while [ "$#" -gt 0 ]; do
     --prune) PRUNE=true ;;
     --yes) YES_CONFIRM=true ;;
     --true) YES_CONFIRM=true ;; # Alias for --yes
-    --build) FORCE_BUILD=true ;;
-    --diag) DIAGNOSTICS=true ;;
+    --build) FORCE_BUILD=true ;; # This is now the default, flag is kept for compatibility
     --log) SHOW_LOGS=true ;;
-    --with-local-llm) WITH_LOCAL_LLM=true ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
   shift
@@ -34,12 +30,6 @@ if ! docker info >/dev/null 2>&1; then
   echo "❌ Error: Docker daemon is not running or unreachable."
   echo "Please ensure Docker Desktop is started and try again."
   exit 1
-fi
-
-# 1. Run Diagnostics if requested
-if [ "$DIAGNOSTICS" = true ]; then
-  echo "🔍 Running system diagnostics..."
-  npx next info
 fi
 
 # 2. Clear Port 3000 (Always)
@@ -60,24 +50,7 @@ else
   fi
 fi
 
-# 3. Delete Conflicting Files
-echo "🗑️  Cleaning up stale project files for a clean build..."
-rm -f package-lock.json
-echo "✓ Removed potentially stale package-lock.json."
-
-# List of obsolete files to remove to prevent build conflicts
-OBSOLETE_FILES="
-app/api/concierge/conversation/route.ts
-lib/chroma.ts
-"
-for FILE in $OBSOLETE_FILES; do
-  if [ -f "$FILE" ]; then
-    rm -f "$FILE"
-    echo "✓ Removed obsolete file: $FILE"
-  fi
-done
-
-# 4. Docker Cleanup
+# 3. Docker Cleanup
 echo "🧹 Stopping existing containers and clearing volumes..."
 docker-compose down -v --remove-orphans || true
 # 5. Optional Pruning
@@ -93,21 +66,12 @@ fi
 
 # 6. Build and Start
 echo "🏗️  Building and starting containers..."
-COMPOSE_ARGS="-f docker-compose.yml"
-
-if [ "$WITH_LOCAL_LLM" = true ]; then
-  echo "🚀 Including local LLM service (docker-compose.ollama.yml)..."
-  if [ -f "docker-compose.ollama.yml" ]; then
-    COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.ollama.yml"
-  else
-    echo "⚠️  Warning: docker-compose.ollama.yml not found, cannot start local LLM."
-  fi
-fi
 
 if [ "$FORCE_BUILD" = true ]; then
-  docker-compose $COMPOSE_ARGS up --build -d
+  # Always build by default for consistency
+  docker-compose up --build -d
 else
-  docker-compose $COMPOSE_ARGS up -d
+  docker-compose up -d
 fi
 
 # 7. Tail Logs if requested

@@ -1,22 +1,14 @@
 // lib/types.ts
-
 export interface Message {
   id: string;
-  role: 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool';
+  role: 'user' | 'assistant' | 'system';
   content: string;
-  createdAt: Date;
+  createdAt: Date | string; // Can be Date on server, string on client
 }
 
 export interface TimelineEvent {
   id: string;
+  timestamp: string;
   title: string;
   details: string;
-  timestamp: string;
-}
-
-export interface Workflow {
-  id: string;
-  name: string;
-  status: 'active' | 'paused';
-  lastRun: string;
 }

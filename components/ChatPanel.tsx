@@ -14,7 +14,11 @@ export function ChatPanel({ children, className }: ChatPanelProps) {
   // Fix hydration mismatch for random ID
   const [systemId, setSystemId] = useState<string>('');
   useEffect(() => {
-    setSystemId(crypto.randomUUID().slice(0, 8).toUpperCase());
+    // Fallback for non-secure contexts where crypto.randomUUID might be undefined
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID 
+      ? crypto.randomUUID().slice(0, 8).toUpperCase()
+      : Math.random().toString(36).substring(2, 10).toUpperCase();
+    setSystemId(id);
   }, []);
 
   return (

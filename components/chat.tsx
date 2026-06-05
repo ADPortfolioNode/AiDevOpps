@@ -1,16 +1,36 @@
 // components/chat.tsx
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import ReactMarkdown, { type Options } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useChatContext } from '@/lib/chatContext';
 import { CodeBlock } from './CodeBlock';
 
 export function Chat() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error, reload } = useChatContext();
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error, reload, setInput } = useChatContext();
+  const [isSending, setIsSending] = useState(false);
+  const busy = isLoading || isSending;
+
+  useEffect(() => {
+    if (!isLoading && isSending) setIsSending(false);
+  }, [isLoading, isSending]);
+
+  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const value = (textareaRef.current?.value || draftRef.current || input).trim();
+    if (!value || busy) return;
+
+    setIsSending(true);
+    flushSync(() => setInput(value));
+    draftRef.current = '';
+    handleSubmit(e);
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const draftRef = useRef('');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -18,7 +38,7 @@ export function Chat() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading, error]);
+  }, [messages, busy, error]);
 
   const markdownComponents: Options['components'] = {
     // The `code` component from react-markdown receives special props like `inline`.
@@ -41,14 +61,15 @@ export function Chat() {
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {messages.length === 0 && !isLoading && !error && (
           <div className="text-center text-gray-500 mt-12">
-            Start a conversation with the AI Concierge
+            <p>Start a conversation with the AI Concierge</p>
+            <p className="text-xs text-green-500 mt-2 font-mono">AiDevOps System Status: ONLINE.</p>
           </div>
         )}
         
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex message-bubble ${msg.role} ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
               className={`max-w-[75%] p-4 rounded-2xl ${
@@ -69,9 +90,9 @@ export function Chat() {
           </div>
         ))}
 
-        {isLoading && (
+        {busy && (
           <div className="flex justify-start">
-            <div className="max-w-[85%] p-3 rounded-2xl bg-gray-800 text-gray-100">
+            <div className="max-w-[75%] p-3 rounded-2xl bg-gray-800 text-gray-100">
               <div className="flex gap-1 py-1 px-1">
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-duration:0.8s]" />
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.2s]" />
@@ -83,14 +104,15 @@ export function Chat() {
 
         {error && (
           <div className="flex justify-start">
-            <div className="max-w-[85%] p-4 rounded-2xl bg-red-900/50 text-red-300 border border-red-500/30">
-              <div className="font-bold mb-1 text-[10px] uppercase tracking-wider text-red-400">
+            <div className="max-w-[75%] p-4 rounded-2xl bg-red-900/50 text-red-300 border border-red-500/30">
+              <div className="font-bold mb-2 text-[10px] uppercase tracking-wider text-red-400 flex items-center gap-2">
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                 An Error Occurred
               </div>
-              <p className="text-xs mb-3 font-mono">{error.message}</p>
-              {reload && (
+              <p className="text-xs mb-4 font-mono leading-relaxed bg-black/20 p-2 rounded">{error.message}</p>
+              {typeof reload === 'function' && (
                 <button 
-                  onClick={() => reload()} 
+                  onClick={() => { console.log('Retrying...'); reload(); }}
                   className="text-xs bg-red-500/30 hover:bg-red-500/50 px-3 py-1 rounded-md border border-red-500/50 transition-colors">
                   Retry
                 </button>
@@ -103,19 +125,34 @@ export function Chat() {
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-800 bg-gray-900">
+      <form onSubmit={onFormSubmit} className="p-4 border-t border-gray-800 bg-gray-900">
         <div className="flex gap-3">
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={input}
-            onChange={handleInputChange}
-            placeholder="Ask the Concierge anything..."
-            className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-xl px-5 py-3 focus:outline-none focus:border-blue-500"
-            disabled={isLoading}
+            rows={2}
+            onChange={(e) => {
+              draftRef.current = e.target.value;
+              handleInputChange(e);
+            }}
+            onInput={(e) => {
+              draftRef.current = e.currentTarget.value;
+              const value = e.currentTarget.value;
+              if (value !== input) setInput(value);
+            }}
+            placeholder="Ask a question..."
+            className="flex-1 min-h-[44px] resize-none bg-gray-800 border border-gray-700 text-white rounded-xl px-5 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={busy}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                (e.target as HTMLTextAreaElement).form?.requestSubmit();
+              }
+            }}
           />
           <button
             type="submit"
-            disabled={isLoading || !input.trim()}
+            disabled={busy}
             className="bg-blue-600 hover:bg-blue-700 px-8 rounded-xl font-medium disabled:opacity-50"
           >
             Send

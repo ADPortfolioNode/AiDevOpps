@@ -16,12 +16,13 @@ function ChatProviderWrapper({ children, initialMessages }: ChatProviderWrapperP
 
   // Dates are serialized as strings from Server Components.
   // We need to convert them back to Date objects for the `useChat` hook.
-  const normalizedMessages = initialMessages.map(message => ({
+  const normalizedMessages = (initialMessages || []).map((message: any) => ({
     ...message,
-    createdAt: new Date(message.createdAt),
+    createdAt: message.createdAt ? new Date(message.createdAt) : undefined,
   }));
 
   const chatHelpers = useChat({
+    api: '/api/chat',
     body: { model: selectedModel },
     initialMessages: normalizedMessages,
   });

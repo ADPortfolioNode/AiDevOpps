@@ -23,10 +23,13 @@ export default function RootLayout({
   const conversationHistory = getConversationHistory();
 
   // Ensure data is serializable for the client (dates become strings).
-  const initialMessages = conversationHistory.map(message => ({
-    ...message,
-    createdAt: message.createdAt.toISOString(),
-  })) as unknown as Message[]; // Cast to handle the Date vs string difference across the boundary.
+  const initialMessages: Message[] = conversationHistory.map(message => {
+    const createdAtDate = typeof message.createdAt === 'string' ? new Date(message.createdAt) : message.createdAt;
+    return {
+      ...message,
+      createdAt: createdAtDate.toISOString(),
+    };
+  });
 
   return (
     <html lang="en" className={`${GeistSans.className} bg-surface`} suppressHydrationWarning={true}>

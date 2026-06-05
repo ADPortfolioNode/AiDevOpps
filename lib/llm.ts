@@ -1,56 +1,44 @@
+// lib/llm.ts
 import { ChatOpenAI } from '@langchain/openai';
-import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { FakeListChatModel } from '@langchain/core/utils/testing';
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+export const DEMO_RESPONSE =
+  'AiDevOps is a Next.js dashboard for AI Operations Management. It helps you ingest documents, search your knowledge base with RAG, and chat with a Concierge agent.';
 
-// A map to cache LLM instances
-const llmInstances = new Map<string, BaseChatModel>();
+export function isLlmConfigured(): boolean {
+  return Boolean(process.env.OPENAI_API_KEY || process.env.GOOGLE_API_KEY);
+}
+
+function createDemoModel(): BaseChatModel {
+  return new FakeListChatModel({ responses: [DEMO_RESPONSE] }) as unknown as BaseChatModel;
+}
 
 /**
- * Gets a cached or new instance of a chat model based on the provider and model name.
- * @param provider The LLM provider (e.g., 'openai', 'gemini', 'ollama').
- * @param modelName The name of the model to use.
- * @returns An instance of a LangChain chat model.
+ * Returns a chat model with demo fallback. Prefers Gemini when configured to avoid OpenAI quota issues.
  */
-export function getChatModel(provider: string, modelName: string): BaseChatModel {
-  const cacheKey = `${provider}-${modelName}`;
-  if (llmInstances.has(cacheKey)) {
-    return llmInstances.get(cacheKey)!;
+export function getChatModel(modelName: string): BaseChatModel {
+  if (!isLlmConfigured()) {
+    console.warn('ℹ️ No LLM API keys configured — using demo chat model.');
+    return createDemoModel();
   }
 
-  let model: BaseChatModel;
+  const demo = createDemoModel();
 
-  switch (provider) {
-    case 'openai':
-      if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not set.');
-      model = new ChatOpenAI({
-        apiKey: OPENAI_API_KEY,
-        modelName: modelName,
-        temperature: 0.1,
-      });
-      break;
-    case 'gemini':
-      if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set.');
-      model = new ChatGoogleGenerativeAI({
-        apiKey: GEMINI_API_KEY,
-        model: modelName,
-        temperature: 0.1,
-      });
-      break;
-    case 'ollama':
-    default:
-      model = new ChatOllama({
-        baseUrl: OLLAMA_BASE_URL,
-        model: modelName,
-        temperature: 0.1,
-      });
-      break;
+  if (process.env.GOOGLE_API_KEY) {
+    const gemini = new ChatGoogleGenerativeAI({
+      modelName: 'gemini-1.5-flash',
+      apiKey: process.env.GOOGLE_API_KEY,
+      temperature: 0,
+    });
+    return gemini.withFallbacks({ fallbacks: [demo] }) as unknown as BaseChatModel;
   }
 
-  llmInstances.set(cacheKey, model);
-  return model;
+  const openAI = new ChatOpenAI({
+    modelName,
+    temperature: 0,
+    openAIApiKey: process.env.OPENAI_API_KEY,
+  });
+  return openAI.withFallbacks({ fallbacks: [demo] }) as unknown as BaseChatModel;
 }

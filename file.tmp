@@ -38,11 +38,6 @@ cp .env.local.example .env.local
 Edit `.env.local` and configure your LLM API keys and RAG settings:
 
 ```
-# LLM Provider Configuration (Example for OpenAI)
-# OPENAI_API_KEY=your_openai_api_key_here
-# ANTHROPIC_API_KEY=your_anthropic_api_key_here
-# GOOGLE_API_KEY=your_gemini_api_key_here
-
 # Pinecone Configuration
 PINECONE_API_KEY="your-pinecone-api-key-here"
 PINECONE_INDEX="your-pinecone-index-name"
@@ -53,11 +48,8 @@ PINECONE_INDEX="your-pinecone-index-name"
 A helper script `start.sh` is provided to simplify environment management.
 
 ```bash
-# Start the app and rebuild containers (Ollama is excluded by default)
+# Start the app and build the container
 ./start.sh --build
-
-# To include the local Ollama service
-./start.sh --build --with-local-llm
 
 # To force a full prune of the Docker system before starting
 ./start.sh --prune --yes --build
@@ -91,6 +83,7 @@ Start a chat and ask questions (e.g., "Summarize the key points from the documen
   - `TopNav.tsx`: Main navigation, includes the "Upload Document" button.
 - `lib/`: Core logic and utilities.
   - `agents/conciergeAgent.ts`: The main orchestrating agent.
+  - `agents/ragAssistant.ts`: Handles context retrieval from the vector store.
   - `vectorStore.ts`: Pinecone vector store integration.
   - `embeddings.ts`: Abstraction for embedding model selection (Ollama/OpenAI/Gemini).
   - `llm.ts`: Abstraction for LLM chat model selection.
@@ -123,7 +116,6 @@ npm ci --legacy-peer-deps
 ## Build & Deployment
 
 ### Local Development
-**Note:** If running locally with `npm run dev`, you must comment out `output: 'standalone'` in `next.config.js`.
 
 ```bash
 npm run dev

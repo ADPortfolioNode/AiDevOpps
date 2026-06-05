@@ -10,7 +10,16 @@ import type { UseChatHelpers } from 'ai/react';
 // needed by the chat components, including `error` and `reload`.
 export type ChatContextType = Pick<
   UseChatHelpers,
-  'messages' | 'input' | 'handleInputChange' | 'handleSubmit' | 'isLoading' | 'reload' | 'error' | 'setInput' | 'setMessages' | 'append'
+  | 'messages'
+  | 'input'
+  | 'handleInputChange'
+  | 'handleSubmit'
+  | 'isLoading'
+  | 'reload'
+  | 'error'
+  | 'setInput'
+  | 'setMessages'
+  | 'append'
 >;
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);

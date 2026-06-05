@@ -28,9 +28,9 @@ export function DashboardPanels() {
       <div className="space-y-8">
         <CollapsiblePanel title="System Stats">
           <div className="grid grid-cols-3 gap-4 text-center">
-            <StatCard value={stats.tasks} label="Tasks" color="text-blue-400" />
-            <StatCard value={`${stats.hitRate}%`} label="Hit Rate" color="text-green-400" />
-            <StatCard value={`$${stats.cost.toFixed(2)}`} label="Cost" color="text-yellow-400" />
+            <StatCard value={stats?.tasks ?? 0} label="Tasks" color="text-blue-400" />
+            <StatCard value={`${stats?.hitRate ?? 0}%`} label="Hit Rate" color="text-green-400" />
+            <StatCard value={`$${(stats?.cost ?? 0).toFixed(2)}`} label="Cost" color="text-yellow-400" />
           </div>
         </CollapsiblePanel>
         <CollapsiblePanel title="Automated Workflows">

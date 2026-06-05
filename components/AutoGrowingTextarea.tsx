@@ -12,3 +12,5 @@ export const AutoGrowingTextarea = React.forwardRef<HTMLTextAreaElement, Textare
     );
   }
 );
+
+AutoGrowingTextarea.displayName = 'AutoGrowingTextarea';

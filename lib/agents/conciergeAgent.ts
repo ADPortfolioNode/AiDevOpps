@@ -1,5 +1,4 @@
-import { ChatOpenAI } from '@langchain/openai';
-import { AgentExecutor, createOpenAIFunctionsAgent } from 'langchain/agents';
+import { AgentExecutor, createToolCallingAgent } from 'langchain/agents';
 import {
   SystemMessage,
   HumanMessage,
@@ -8,6 +7,7 @@ import {
   ChatPromptTemplate,
   MessagesPlaceholder,
 } from '@langchain/core/prompts';
+import { getChatModel } from '../llm';
 import { createTools } from '../tools';
 import { addTimelineEvent } from '../serverCache';
 
@@ -19,12 +19,7 @@ Always be professional and helpful.`;
 
 export const createConciergeAgent = async (userId: string, modelName: string) => {
   addTimelineEvent('Agent Creation', `Initializing Concierge Agent with model: ${modelName}`);
-  const llm = new ChatOpenAI({
-    modelName,
-    temperature: 0,
-    streaming: true,
-  });
-
+  const llm = getChatModel(modelName);
   const tools = createTools(userId);
 
   const prompt = ChatPromptTemplate.fromMessages([
@@ -34,7 +29,7 @@ export const createConciergeAgent = async (userId: string, modelName: string) =>
     new MessagesPlaceholder('agent_scratchpad'),
   ]);
 
-  const agent = await createOpenAIFunctionsAgent({ llm, tools, prompt });
+  const agent = await createToolCallingAgent({ llm, tools, prompt });
 
   return new AgentExecutor({
     agent,
